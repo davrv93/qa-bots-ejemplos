@@ -173,6 +173,11 @@ La primera vez, `evolution-go` se compila desde su código fuente, así que tard
 2. En el teléfono: **WhatsApp › Dispositivos vinculados › Vincular un dispositivo**, y escanea el QR del panel.
 3. Desde un número de `NUMEROS_PERMITIDOS`, escríbele al número vinculado: «ayuda».
 
+**Hacen falta dos números.** El que vinculas es el del bot. Escríbele desde **otro** número, el tuyo, que
+esté en `NUMEROS_PERMITIDOS`. Los mensajes que salen del mismo número vinculado, como el chat contigo mismo,
+el bot los toma como propios y no los responde. Para practicar
+sirve un segundo chip.
+
 ![Panel del bot QA con la IA inyectada y el QR para vincular](docs/img/04-panel.png)
 
 *En la captura, el QR está pixelado a propósito. El tuyo se ve nítido y cambia cada 20 segundos.*
