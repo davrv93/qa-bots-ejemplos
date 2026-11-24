@@ -1,0 +1,130 @@
+# QA Bots · ejemplos. Los mismos comandos en Windows (PowerShell) y en Mac (Terminal).
+#
+#   docker compose up -d --build                         Tienda Sol           http://127.0.0.1:3000
+#   docker compose --profile explora up -d --build       + 4 bots             http://127.0.0.1:3300
+#   docker compose --profile vigila up -d --build        + robot y vigía      http://127.0.0.1:3200
+#   docker compose --profile whatsapp up -d --build      + Evolution Go y bot QA  http://127.0.0.1:8090
+#
+# Todos los puertos se publican solo en 127.0.0.1: nada queda abierto a tu red.
+name: qa-bots
+
+
+services:
+  tienda:
+    build: ./tienda
+    environment:
+      BUGS: "${BUGS:-1}"          # 1 = con sus defectos (para que los bots los encuentren); 0 = corregida
+      LATENCIA_MS: "${LATENCIA_MS:-0}"   # demora artificial por respuesta (para probar avisos de lentitud)
+    ports: ["127.0.0.1:${PUERTO_TIENDA:-3000}:3000"]
+    restart: unless-stopped
+
+  # ── Sesión 1 · Explora ─────────────────────────────────────────────────────
+  bots:
+    profiles: [explora]
+    build: { context: ., dockerfile: bots/Dockerfile }
+    depends_on: [tienda]
+    environment:
+      BASE_URL: http://tienda:3000/
+      FALLOS_WEBHOOK: "http://bot-qa:8090/entrada/${WEBHOOK_SECRETO}/fallo"   # si el bot QA no está, solo se anota en el log
+    ports: ["127.0.0.1:${PUERTO_BOTS:-3300}:3300"]
+    volumes: [fallos:/kit/bots/fallos]
+    shm_size: 512m
+    mem_limit: 1g
+
+  # ── Sesión 2 · Vigila ──────────────────────────────────────────────────────
+  robot:
+    profiles: [vigila]
+    build: { context: ., dockerfile: robot/Dockerfile }
+    depends_on: [tienda]
+    environment:
+      BASE_URL: http://tienda:3000/
+      CADA_MIN: "${CADA_MIN:-10}"
+    ports: ["127.0.0.1:${PUERTO_ROBOT:-3200}:3200"]
+    volumes: [historial:/kit/robot/historial]
+    shm_size: 256m
+    mem_limit: 768m
+
+  vigia:
+    profiles: [vigila]
+    image: node:22-alpine
+    depends_on: [tienda]
+    command: ["node", "/vigia/vigia.mjs"]
+    environment:
+      VIGIA_URL: http://tienda:3000/salud
+      VIGIA_CADA: "5"
+      VIGIA_WEBHOOK: "http://bot-qa:8090/entrada/${WEBHOOK_SECRETO}/alerta"
+    volumes: ["./vigia:/vigia:ro"]
+    restart: unless-stopped
+
+  # ── Proyecto final · WhatsApp con Evolution Go y la IA inyectada ───────────
+  postgres:
+    profiles: [whatsapp]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: evogo
+      POSTGRES_PASSWORD: "${POSTGRES_CLAVE:?Copia .env.example a .env}"
+      POSTGRES_DB: evogo_auth
+    volumes:
+      - pgdatos:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evogo -d evogo_auth"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  evolution-go:
+    profiles: [whatsapp]
+    build: ./evolution-go
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      SERVER_PORT: "8081"
+      CLIENT_NAME: qa-bots
+      GLOBAL_API_KEY: "${EVOLUTION_CLAVE_GLOBAL:?Copia .env.example a .env}"
+      POSTGRES_AUTH_DB: "postgresql://evogo:${POSTGRES_CLAVE}@postgres:5432/evogo_auth?sslmode=disable"
+      POSTGRES_USERS_DB: "postgresql://evogo:${POSTGRES_CLAVE}@postgres:5432/evogo_users?sslmode=disable"
+      DATABASE_SAVE_MESSAGES: "false"
+      MINIO_ENABLED: "false"
+      WEBHOOK_FILES: "false"
+      CONNECT_ON_STARTUP: "true"
+      EVENT_IGNORE_STATUS: "true"
+      EVENT_IGNORE_GROUP: "true"
+      HISTORY_SYNC_DOWNLOAD: "false"
+      LOG_TYPE: console
+      TZ: America/Lima
+    ports: ["127.0.0.1:${PUERTO_EVOLUTION:-8081}:8081"]
+    volumes: [evologs:/app/logs]
+    restart: unless-stopped
+
+  bot-qa:
+    profiles: [whatsapp]
+    build: ./bot-qa
+    depends_on: [evolution-go]
+    environment:
+      EVOLUTION_URL: http://evolution-go:8081
+      EVOLUTION_CLAVE_GLOBAL: "${EVOLUTION_CLAVE_GLOBAL}"
+      EVOLUTION_INSTANCIA: qa-bot
+      EVOLUTION_TOKEN_INSTANCIA: "${EVOLUTION_TOKEN_INSTANCIA:?Copia .env.example a .env}"
+      BOT_URL_INTERNA: http://bot-qa:8090
+      WEBHOOK_SECRETO: "${WEBHOOK_SECRETO}"
+      ADMIN_CLAVE: "${ADMIN_CLAVE:?Copia .env.example a .env}"
+      NUMEROS_PERMITIDOS: "${NUMEROS_PERMITIDOS:-}"
+      NUMEROS_ALERTA: "${NUMEROS_ALERTA:-}"
+      LLM_PROVEEDOR: "${LLM_PROVEEDOR:-falso}"
+      LLM_API_KEY: "${LLM_API_KEY:-}"
+      LLM_MODELO: "${LLM_MODELO:-}"
+      LLM_BASE_URL: "${LLM_BASE_URL:-}"
+      WHATSAPP: "${WHATSAPP:-evolution}"
+      CONTEXTO_DIR: /contexto
+    volumes: [".:/contexto:ro"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    ports: ["127.0.0.1:${PUERTO_BOT:-8090}:8090"]
+    restart: unless-stopped
+
+volumes:
+  fallos:
+  historial:
+  pgdatos:
+  evologs:

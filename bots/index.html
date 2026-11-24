@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Usuarios sintéticos · Tienda Sol</title>
+<style>
+:root{--bg:#f6f3ea;--fg:#1a1a1a;--tinta:#111;--card:#fff;--ok:#0f9d58;--bad:#d7263d;--warn:#f29f05;--azul:#1d4fd8;--muted:#666}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding:12px 18px;background:var(--tinta);color:#fff;border-bottom:5px solid var(--warn)}
+header h1{margin:0;font:900 20px/1 system-ui;letter-spacing:-.02em}header h1 span{color:var(--warn)}
+.ctrl{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-left:auto;font-size:13px}
+.ctrl label{display:flex;gap:5px;align-items:center}.ctrl input,.ctrl select{font:inherit;padding:4px 6px;border-radius:6px;border:1px solid #888;background:#fff;color:#111}
+.ctrl input[type=number]{width:70px}
+button{font:700 14px system-ui;padding:8px 14px;border-radius:8px;border:2px solid var(--tinta);background:#fff;color:var(--tinta);cursor:pointer;box-shadow:3px 3px 0 var(--tinta)}
+button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--tinta)}button:disabled{opacity:.45;cursor:default}
+button.primario{background:var(--warn)}button.rojo{background:var(--bad);color:#fff}
+main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;padding:16px 18px}
+@media(max-width:1000px){main{grid-template-columns:1fr}}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:640px){.grid{grid-template-columns:1fr}}
+.tile{background:var(--card);border:3px solid var(--tinta);border-radius:12px;box-shadow:5px 5px 0 var(--tinta);overflow:hidden;cursor:pointer}
+.tile .cab{display:flex;gap:10px;align-items:center;padding:8px 10px;border-bottom:2px solid var(--tinta)}
+.tile .cab svg{width:40px;height:40px;flex:none}.tile .nom{font-weight:800;line-height:1.1}.tile .nom small{display:block;font-weight:500;color:var(--muted)}
+.chip{margin-left:auto;font:700 11px system-ui;padding:3px 8px;border-radius:999px;background:#eee;color:#333;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
+.chip.navegando{background:#dbe6ff;color:var(--azul)}.chip.escribiendo{background:#fff2c7;color:#8a5a00}.chip.esperando{background:#eee}.chip.fallo{background:var(--bad);color:#fff}.chip.terminado,.chip.ok{background:#d9f3e4;color:#0a6b3b}
+.pant{position:relative;background:#222;aspect-ratio:1000/700}.pant img{display:block;width:100%;height:100%;object-fit:contain;background:#fff}
+.cursor{position:absolute;width:22px;height:26px;transform:translate(-3px,-2px);filter:drop-shadow(1px 2px 1px rgba(0,0,0,.5));transition:left .25s linear,top .25s linear;pointer-events:none}
+.burbuja{position:absolute;left:50%;top:8px;transform:translateX(-50%);padding:4px 10px;background:#fff;border:2px solid var(--tinta);border-radius:999px;font:700 12px system-ui;box-shadow:2px 2px 0 var(--tinta);display:none}
+.burbuja.on{display:block}.burbuja::after{content:"";display:inline-block;width:1.1em;overflow:hidden;vertical-align:bottom;animation:puntos 1s steps(4) infinite}
+@keyframes puntos{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+.accion{padding:6px 10px;font-size:13px;border-top:2px solid var(--tinta);min-height:2.2em;background:#fafafa}
+.fallos{background:var(--card);border:3px solid var(--tinta);border-radius:12px;box-shadow:5px 5px 0 var(--tinta);display:flex;flex-direction:column;max-height:calc(100vh - 120px);position:sticky;top:12px}
+.fallos h2{margin:0;padding:10px 12px;border-bottom:2px solid var(--tinta);font-size:16px;display:flex;align-items:center;gap:8px}
+.badge{background:var(--bad);color:#fff;font:800 12px system-ui;padding:2px 8px;border-radius:999px}
+.lista{overflow:auto;padding:8px;display:grid;gap:8px}
+.fallo{display:grid;grid-template-columns:72px 1fr;gap:8px;align-items:center;padding:6px;border:2px solid #ddd;border-radius:8px;cursor:pointer;background:#fff}
+.fallo:hover{border-color:var(--tinta)}.fallo img{width:72px;height:50px;object-fit:cover;border:1px solid #999;border-radius:4px;background:#eee}
+.fallo .r{font:700 12px system-ui;color:var(--bad)}.fallo.conocido .r{color:var(--muted)}.fallo .m{font-size:12px;color:#333}.fallo .q{font-size:11px;color:var(--muted)}
+.vacio{padding:16px;color:var(--muted);font-size:13px}
+dialog{border:3px solid var(--tinta);border-radius:12px;box-shadow:8px 8px 0 var(--tinta);padding:0;max-width:min(1100px,96vw);width:96vw}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.dcab{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:2px solid var(--tinta);background:#fafafa}.dcab h3{margin:0;font-size:16px;flex:1}
+.dcuerpo{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px;padding:12px;max-height:80vh;overflow:auto}
+@media(max-width:900px){.dcuerpo{grid-template-columns:1fr}}
+.log{font:12px/1.5 ui-monospace,Menlo,monospace;background:#111;color:#eee;border-radius:8px;padding:8px;max-height:36vh;overflow:auto;white-space:pre-wrap}
+.log .ok{color:#8bdb9b}.log .fallo{color:#ff8a8a;font-weight:700}.log .viaje{color:#ffd21a}.log .t{color:#888}
+.red{font:12px ui-monospace,monospace;max-height:22vh;overflow:auto;border:1px solid #ddd;border-radius:8px}.red div{display:flex;gap:8px;padding:2px 8px;border-bottom:1px solid #eee}.red .e4{color:var(--bad);font-weight:700}.red .e2{color:var(--ok)}
+.dcuerpo img.cap{width:100%;border:2px solid var(--tinta);border-radius:8px}
+pre.spec{font:12px/1.45 ui-monospace,monospace;background:#0d1118;color:#e6edf3;padding:10px;border-radius:8px;overflow:auto;max-height:40vh}
+.kv{font-size:13px;display:grid;grid-template-columns:auto 1fr;gap:2px 10px}.kv b{color:var(--muted);font-weight:600}
+.pie{padding:8px 18px 16px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🤖 Usuarios <span>sintéticos</span> · Tienda Sol</h1>
+  <form class="ctrl" id="ctrl" onsubmit="return false">
+    <label>Semilla <input type="number" id="semilla" value="7" min="1"></label>
+    <label>Velocidad <select id="velocidad"><option value="lento">lento</option><option value="normal" selected>normal</option><option value="rapido">rápido</option></select></label>
+    <label>Viajes por bot <input type="number" id="viajes" value="3" min="1" max="20"></label>
+    <label><input type="checkbox" id="corregida"> tienda corregida</label>
+    <button type="button" class="primario" id="iniciar">▶ Iniciar 4 bots</button>
+    <button type="button" class="rojo" id="detener" disabled>■ Detener</button>
+  </form>
+</header>
+<main>
+  <section>
+    <div class="grid" id="grid"></div>
+    <p class="pie" id="pie">Cada bot abre su propia Tienda Sol y hace viajes completos: entra, busca, agrega, cobra y mira el reporte. Los fallos se registran solos con captura, pasos, red y una prueba Playwright para reproducirlos.</p>
+  </section>
+  <aside class="fallos">
+    <h2>Fallos registrados <span class="badge" id="nfallos">0</span></h2>
+    <div class="lista" id="lista"><div class="vacio">Todavía no hay fallos. Pulsa «Iniciar».</div></div>
+  </aside>
+</main>
+<dialog id="dbot"><div class="dcab"><svg id="dav" width="36" height="36"></svg><h3 id="dtit"></h3><button type="button" onclick="dbot.close()">Cerrar</button></div>
+  <div class="dcuerpo"><div><div class="pant" style="border:2px solid #111;border-radius:8px"><img id="dimg" alt=""><svg class="cursor" id="dcur" viewBox="0 0 22 26"><path d="M2 2 L2 20 L7 15 L11 24 L14 22 L10 14 L17 14 Z" fill="#fff" stroke="#111" stroke-width="2"/></svg><div class="burbuja" id="dbur">escribiendo</div></div><p id="dacc" class="accion" style="border:0"></p></div>
+  <div><h4 style="margin:4px 0">Acciones</h4><div class="log" id="dlog"></div><h4 style="margin:10px 0 4px">Peticiones a la API</h4><div class="red" id="dred"></div></div></div></dialog>
+<dialog id="dfallo"><div class="dcab"><h3 id="ftit"></h3><a id="fspec" download><button type="button">⬇ spec de Playwright</button></a><button type="button" id="fconocido">marcar como conocido</button><button type="button" onclick="dfallo.close()">Cerrar</button></div>
+  <div class="dcuerpo"><div><img class="cap" id="fimg" alt="captura del fallo"><div class="kv" id="fkv"></div></div><div><h4 style="margin:4px 0">Pasos hasta el fallo</h4><div class="log" id="flog"></div><h4 style="margin:10px 0 4px">Prueba generada</h4><pre class="spec" id="fpre"></pre></div></div></dialog>
+<script>
+const $=(id)=>document.getElementById(id);
+const AV={rosa:'<circle cx="20" cy="20" r="19" fill="#e8322f"/><circle cx="20" cy="17" r="8" fill="#ffd9b3"/><path d="M8 36c2-9 22-9 24 0z" fill="#ffd9b3"/><path d="M12 15c0-9 16-9 16 0v-3c-6-3-10-3-16 0z" fill="#3b1d0e"/><circle cx="17" cy="17" r="1.3"/><circle cx="23" cy="17" r="1.3"/><path d="M17 21q3 2 6 0" stroke="#111" stroke-width="1.3" fill="none"/>',
+luis:'<circle cx="20" cy="20" r="19" fill="#1d4fd8"/><circle cx="20" cy="17" r="8" fill="#e0b58a"/><path d="M8 36c2-9 22-9 24 0z" fill="#e0b58a"/><path d="M12 13c2-6 14-6 16 0z" fill="#111"/><rect x="13" y="15" width="6" height="4" rx="1" fill="none" stroke="#111" stroke-width="1.4"/><rect x="21" y="15" width="6" height="4" rx="1" fill="none" stroke="#111" stroke-width="1.4"/><path d="M17 22q3 2 6 0" stroke="#111" stroke-width="1.3" fill="none"/>',
+mia:'<circle cx="20" cy="20" r="19" fill="#0f9d58"/><circle cx="20" cy="17" r="8" fill="#f1c9a5"/><path d="M8 36c2-9 22-9 24 0z" fill="#f1c9a5"/><path d="M11 20c0-12 18-12 18 0v6h-3v-6c0-7-12-7-12 0v6h-3z" fill="#5a2d0c"/><circle cx="17" cy="17" r="1.3"/><circle cx="23" cy="17" r="1.3"/><path d="M18 21h4" stroke="#111" stroke-width="1.3"/>',
+beto:'<circle cx="20" cy="20" r="19" fill="#f29f05"/><circle cx="20" cy="17" r="8" fill="#d9a066"/><path d="M8 36c2-9 22-9 24 0z" fill="#d9a066"/><path d="M12 12l3 3 3-4 2 4 2-4 3 4 3-3v4H12z" fill="#222"/><circle cx="17" cy="17" r="1.3"/><circle cx="23" cy="17" r="1.5"/><path d="M17 22q3-2 6 0" stroke="#111" stroke-width="1.3" fill="none"/>'};
+const svg=(id)=>`<svg viewBox="0 0 40 40" aria-hidden="true">${AV[id]||''}</svg>`;
+const bots={}; let abierto=null; let estadoG={};
+function clip(s,n){s=String(s??'');return s.length>n?s.slice(0,n-1)+'…':s}
+function pintarGrid(){ $('grid').innerHTML=''; for(const b of (estadoG.bots||[])){ bots[b.id]=Object.assign(bots[b.id]||{},b);
+  const t=document.createElement('article'); t.className='tile'; t.id='tile-'+b.id; t.onclick=()=>abrirBot(b.id);
+  t.innerHTML=`<div class="cab">${svg(b.id)}<div class="nom">${b.nombre}<small>${b.persona.rol} · viaje <span class="v">${b.viaje||0}</span>/${estadoG.viajes}</small></div><span class="chip ${clase(b.estado)}">${b.estado}</span></div>
+  <div class="pant"><img alt="pantalla de ${b.nombre}"><svg class="cursor" viewBox="0 0 22 26" style="left:50%;top:50%"><path d="M2 2 L2 20 L7 15 L11 24 L14 22 L10 14 L17 14 Z" fill="#fff" stroke="#111" stroke-width="2"/></svg><div class="burbuja">escribiendo</div></div>
+  <div class="accion">${clip(b.accion,110)}</div>`; $('grid').append(t); if(bots[b.id].frame) ponerFrame(b.id,bots[b.id].frame,b.cursor,b.escribiendo); } }
+function clase(e){return e==='¡fallo!'?'fallo':e==='terminado'?'terminado':e||''}
+function actualizarBot(b){ const prev=bots[b.id]||{}; bots[b.id]=Object.assign(prev,b); const t=$('tile-'+b.id); if(!t) return;
+  t.querySelector('.chip').className='chip '+clase(b.estado); t.querySelector('.chip').textContent=b.estado; t.querySelector('.accion').textContent=clip(b.accion,110); t.querySelector('.v').textContent=b.viaje||0;
+  if(abierto===b.id){$('dacc').textContent=b.accion; $('dtit').textContent=`${b.nombre} · ${b.persona.rol} · ${b.estado}`;} }
+function ponerFrame(id,data,cursor,esc){ const t=$('tile-'+id); if(!t) return; bots[id].frame=data; t.querySelector('img').src='data:image/jpeg;base64,'+data; ponerCursor(t,cursor,esc); if(abierto===id){$('dimg').src=t.querySelector('img').src; ponerCursor($('dbot'),cursor,esc,'dcur','dbur');} }
+function ponerCursor(root,c,esc,cid,bid){ if(!c) return; const cur=cid?$(cid):root.querySelector('.cursor'); const bur=bid?$(bid):root.querySelector('.burbuja'); cur.style.left=(c.x*100)+'%'; cur.style.top=(c.y*100)+'%'; bur.classList.toggle('on',!!esc); }
+function abrirBot(id){ abierto=id; const b=bots[id]; $('dav').innerHTML=svg(id); $('dav').setAttribute('viewBox','0 0 40 40'); $('dtit').textContent=`${b.nombre} · ${b.persona.rol} · ${b.estado}`; $('dacc').textContent=b.accion||'';
+  if(b.frame) $('dimg').src='data:image/jpeg;base64,'+b.frame; ponerCursor($('dbot'),b.cursor,b.escribiendo,'dcur','dbur');
+  $('dlog').innerHTML=(b.log||[]).map(lineaLog).join(''); $('dred').innerHTML=(b.red||[]).map(lineaRed).join(''); $('dbot').showModal(); $('dlog').scrollTop=1e9; }
+const esc=(s)=>String(s??'').replace(/[&<>]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function lineaLog(e){return `<div class="${e.tipo}"><span class="t">${e.t}</span> ${esc(e.texto)}</div>`}
+function lineaRed(e){return `<div><span>${e.t}</span><span>${e.metodo}</span><span style="flex:1">${esc(e.ruta)}</span><span class="${e.estado>=400?'e4':'e2'}">${e.estado}</span></div>`}
+$('dbot').addEventListener('close',()=>{abierto=null});
+// fallos
+let fallos=[];
+function pintarFallos(){ const l=$('lista'); const vivos=fallos.filter(f=>!f.conocido); $('nfallos').textContent=vivos.length;
+  if(!fallos.length){l.innerHTML='<div class="vacio">Todavía no hay fallos. Pulsa «Iniciar».</div>';return}
+  l.innerHTML=[...fallos].reverse().map(f=>`<div class="fallo ${f.conocido?'conocido':''}" data-id="${f.id}"><img src="api/fallos/${f.id}/captura.png" alt=""><div><div class="r">${esc(f.regla)}${f.veces>1?` ×${f.veces}`:''}${f.conocido?' · conocido':''}</div><div class="m">${esc(clip(f.mensaje,90))}</div><div class="q">${esc(f.bot)} · ${esc(f.pantalla)} · ${new Date(f.hora).toLocaleTimeString('es-PE',{timeZone:'America/Lima'})}</div></div></div>`).join('');
+  l.querySelectorAll('.fallo').forEach(el=>el.onclick=()=>abrirFallo(el.dataset.id)); }
+async function abrirFallo(id){ const f=await (await fetch('api/fallos/'+id)).json(); $('ftit').textContent=`✗ ${f.regla} · ${f.bot}`; $('fimg').src=`api/fallos/${id}/captura.png?${Date.now()}`; $('fspec').href=`api/fallos/${id}/spec.ts`;
+  $('fkv').innerHTML=[['Mensaje',f.mensaje],['Esperado',f.esperado],['Recibido',f.recibido],['Pantalla',f.pantalla],['Semilla',f.semilla],['Veces',f.veces],['Tienda',f.tienda]].filter(x=>x[1]!==undefined).map(([k,v])=>`<b>${k}</b><span>${esc(v)}</span>`).join('');
+  $('flog').innerHTML=(f.pasos||[]).map(lineaLog).join(''); $('fpre').textContent=f.spec; $('fconocido').textContent=f.conocido?'quitar «conocido»':'marcar como conocido'; $('fconocido').onclick=async()=>{const r=await (await fetch(`api/fallos/${id}/conocido`,{method:'POST'})).json(); const i=fallos.findIndex(x=>x.id===id); if(i>=0) fallos[i]=r; pintarFallos(); $('fconocido').textContent=r.conocido?'quitar «conocido»':'marcar como conocido';}; $('dfallo').showModal(); }
+// SSE
+function conectar(){ const es=new EventSource('api/eventos');
+  es.addEventListener('estado',(e)=>{estadoG=JSON.parse(e.data); fallos=estadoG.fallos||fallos; $('iniciar').disabled=estadoG.corriendo; $('detener').disabled=!estadoG.corriendo; $('semilla').value=estadoG.semilla; $('velocidad').value=estadoG.velocidad; $('viajes').value=estadoG.viajes; $('corregida').checked=!!estadoG.corregida; pintarGrid(); pintarFallos();
+    $('pie').textContent=estadoG.corriendo?`Corriendo desde ${new Date(estadoG.inicio).toLocaleTimeString('es-PE',{timeZone:'America/Lima'})} · semilla ${estadoG.semilla} · ${estadoG.corregida?'tienda corregida':'tienda con bugs'} · ${estadoG.base}`:'Cada bot abre su propia Tienda Sol y hace viajes completos: entra, busca, agrega, cobra y mira el reporte. Los fallos se registran solos con captura, pasos, red y una prueba Playwright para reproducirlos.';});
+  es.addEventListener('bot',(e)=>actualizarBot(JSON.parse(e.data)));
+  es.addEventListener('frame',(e)=>{const d=JSON.parse(e.data); ponerFrame(d.bot,d.data,d.cursor,d.escribiendo)});
+  es.addEventListener('cursor',(e)=>{const d=JSON.parse(e.data); const t=$('tile-'+d.bot); if(t){bots[d.bot].cursor=d.cursor; ponerCursor(t,d.cursor,bots[d.bot].escribiendo); if(abierto===d.bot) ponerCursor($('dbot'),d.cursor,bots[d.bot].escribiendo,'dcur','dbur');}});
+  es.addEventListener('accion',(e)=>{const d=JSON.parse(e.data); const b=bots[d.bot]; if(!b) return; (b.log=b.log||[]).push(d); if(b.log.length>300) b.log.shift(); if(abierto===d.bot){$('dlog').insertAdjacentHTML('beforeend',lineaLog(d)); $('dlog').scrollTop=1e9;}});
+  es.addEventListener('red',(e)=>{const d=JSON.parse(e.data); const b=bots[d.bot]; if(!b) return; (b.red=b.red||[]).push(d); if(b.red.length>60) b.red.shift(); if(abierto===d.bot){$('dred').insertAdjacentHTML('beforeend',lineaRed(d)); $('dred').scrollTop=1e9;}});
+  es.addEventListener('fallo',(e)=>{const f=JSON.parse(e.data); const i=fallos.findIndex(x=>x.id===f.id); if(i>=0) fallos[i]=f; else fallos.push(f); pintarFallos();});
+  es.onerror=()=>{es.close(); setTimeout(conectar,2000)}; }
+conectar();
+$('iniciar').onclick=async()=>{ $('iniciar').disabled=true; const r=await fetch('api/iniciar',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({semilla:$('semilla').value,velocidad:$('velocidad').value,viajes:$('viajes').value,corregida:$('corregida').checked})}); if(!r.ok){$('pie').textContent=(await r.json()).error; $('iniciar').disabled=false;} };
+$('detener').onclick=()=>fetch('api/detener',{method:'POST'});
+</script>
+</body>
+</html>

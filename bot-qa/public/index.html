@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bot QA · panel</title>
+<style>
+  :root { --fondo:#0f1218; --tarjeta:#171b23; --borde:#262c38; --texto:#e8ebf1; --suave:#9aa3b2; --acento:#d4f05a; --verde:#4ade80; --rojo:#f87171; }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--fondo); color:var(--texto); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif }
+  main { max-width:1100px; margin:0 auto; padding:24px 16px 48px }
+  h1 { font-size:24px; margin:0 0 4px } h1 b { color:var(--acento) }
+  .sub { color:var(--suave); margin:0 0 20px }
+  .rejilla { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px }
+  .tarjeta { background:var(--tarjeta); border:1px solid var(--borde); border-radius:14px; padding:18px }
+  .tarjeta h2 { font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:var(--suave); margin:0 0 12px }
+  .fila { display:flex; justify-content:space-between; gap:12px; padding:6px 0; border-bottom:1px solid var(--borde) }
+  .fila:last-child { border:0 } .fila span:first-child { color:var(--suave) }
+  .ok { color:var(--verde) } .mal { color:var(--rojo) }
+  #qr { display:grid; place-items:center; min-height:260px; background:#fff; border-radius:10px; color:#333 }
+  #qr img { width:240px; height:240px }
+  textarea { width:100%; min-height:90px; background:#0b0e13; color:var(--texto); border:1px solid var(--borde); border-radius:10px; padding:10px; font:inherit }
+  button { margin-top:10px; background:var(--acento); color:#111; border:0; border-radius:10px; padding:10px 16px; font-weight:700; cursor:pointer }
+  button:disabled { opacity:.5 }
+  pre { white-space:pre-wrap; word-break:break-word; background:#0b0e13; border:1px solid var(--borde); border-radius:10px; padding:12px; font:13px/1.45 ui-monospace,Menlo,Consolas,monospace; max-height:460px; overflow:auto; margin:10px 0 0 }
+  .ancho { grid-column:1/-1 }
+</style>
+</head>
+<body>
+<main>
+  <h1>Bot <b>QA</b> por WhatsApp</h1>
+  <p class="sub">Recibe un fallo, le pasa a la IA la regla y el código que importa, y devuelve el parche y la prueba como sugerencia.</p>
+  <div class="rejilla">
+    <section class="tarjeta">
+      <h2>Estado</h2>
+      <div class="fila"><span>IA inyectada</span><span id="llm">…</span></div>
+      <div class="fila"><span>WhatsApp</span><span id="wa">…</span></div>
+      <div class="fila"><span>Números permitidos</span><span id="perm">…</span></div>
+      <div class="fila"><span>Fallos de los bots</span><span id="fallos">…</span></div>
+    </section>
+    <section class="tarjeta">
+      <h2>Vincula tu WhatsApp</h2>
+      <div id="qr">Cargando…</div>
+      <p class="sub" style="margin:10px 0 0">En el teléfono: WhatsApp › Dispositivos vinculados › Vincular un dispositivo.</p>
+    </section>
+    <section class="tarjeta ancho">
+      <h2>Probar sin WhatsApp</h2>
+      <textarea id="texto">Al cambiar la cantidad de un producto con promoción, el precio baja otra vez: el descuento se aplica dos veces.</textarea>
+      <button id="probar">Pedir sugerencia</button>
+      <pre id="salida" hidden></pre>
+    </section>
+    <section class="tarjeta ancho">
+      <h2>Últimas sugerencias</h2>
+      <div id="historial" class="sub">Todavía no hay.</div>
+    </section>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+async function estado() {
+  try {
+    const e = await (await fetch('api/estado', { cache: 'no-store' })).json();
+    $('llm').textContent = e.llm;
+    const w = e.whatsapp || {};
+    $('wa').innerHTML = w.error ? '<span class="mal">Evolution Go no responde</span>' : w.falso ? 'modo falso (sin teléfono)'
+      : w.conectado && w.sesion ? '<span class="ok">conectado</span>' : '<span class="mal">sin vincular</span>';
+    $('perm').textContent = e.permitidos; $('fallos').textContent = e.fallos;
+    $('historial').innerHTML = e.historial.length ? '' : 'Todavía no hay.';
+    for (const h of e.historial.slice(0, 5)) { const p = document.createElement('pre'); p.textContent = `${h.hora} · ${h.origen}\n\n${h.texto}`; $('historial').append(p); }
+    if (!(w.conectado && w.sesion) && !w.falso) qr(); else $('qr').textContent = w.falso ? 'Modo falso: no hay QR.' : '✅ Vinculado';
+  } catch { $('wa').textContent = 'sin respuesta'; }
+}
+async function qr() {
+  try {
+    const r = await (await fetch('api/qr', { cache: 'no-store' })).json();
+    if (r.imagen) { const img = new Image(); img.src = r.imagen; img.alt = 'Código QR para vincular WhatsApp'; $('qr').replaceChildren(img); }
+    else $('qr').textContent = r.error ? 'Evolution Go: ' + r.error : 'Preparando el código QR…';
+  } catch { $('qr').textContent = 'No se pudo leer el QR.'; }
+}
+$('probar').onclick = async () => {
+  $('probar').disabled = true; $('salida').hidden = false; $('salida').textContent = 'Pidiendo la sugerencia a la IA…';
+  try {
+    const r = await (await fetch('api/probar', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ texto: $('texto').value }) })).json();
+    $('salida').textContent = r.texto || r.error;
+  } catch (e) { $('salida').textContent = 'Error: ' + e.message; }
+  $('probar').disabled = false; estado();
+};
+estado(); setInterval(estado, 5000);
+</script>
+</body>
+</html>

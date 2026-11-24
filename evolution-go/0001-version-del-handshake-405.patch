@@ -1,0 +1,16 @@
+diff --git a/pkg/whatsmeow/service/whatsmeow.go b/pkg/whatsmeow/service/whatsmeow.go
+index 2a075bb..bae8836 100644
+--- a/pkg/whatsmeow/service/whatsmeow.go
++++ b/pkg/whatsmeow/service/whatsmeow.go
+@@ -408,6 +408,11 @@ func (w whatsmeowService) StartClient(cd *ClientData) {
+ 		}
+ 	}
+ 
++	// La versión del handshake sale de BaseClientPayload, no de DeviceProps. Sin
++	// esto se anunciaba la fija de whatsmeow, y WhatsApp la rechaza con 405 cuando
++	// envejece. Si no se obtuvo ninguna, SetWAVersion ignora el cero.
++	store.SetWAVersion(store.WAVersionContainer{uint32(version.Major), uint32(version.Minor), uint32(version.Patch)})
++
+ 	// 🔒 FIX: Sempre criar logger, mesmo que WaDebug esteja vazio
+ 	// Usar "INFO" como nível mínimo para garantir que logs importantes apareçam
+ 	minLevel := w.config.WaDebug

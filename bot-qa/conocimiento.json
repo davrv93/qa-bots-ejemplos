@@ -1,0 +1,88 @@
+{
+  "_que_es": "Mapa de reglas de negocio de Tienda Sol a los archivos que las implementan. El bot lo usa para darle a la IA solo el código que importa.",
+  "reglas": {
+    "promo-aplicada-dos-veces": {
+      "regla": "El precio de una línea siempre es precioLista × (1 − promo/100), sin importar cuántas veces cambie la cantidad.",
+      "archivos": [
+        "tienda/publico/js/venta.js"
+      ],
+      "buscar": "function recalcularLinea",
+      "palabras": [
+        "promo",
+        "descuento",
+        "precio",
+        "cantidad"
+      ]
+    },
+    "pago-insuficiente-aceptado": {
+      "regla": "Una venta en efectivo solo se confirma si el efectivo cubre el total; si falta, se avisa cuánto falta.",
+      "archivos": [
+        "tienda/publico/js/venta.js"
+      ],
+      "buscar": "async function confirmar",
+      "palabras": [
+        "pago",
+        "efectivo",
+        "vuelto",
+        "cobro",
+        "falta"
+      ]
+    },
+    "stock-negativo": {
+      "regla": "No se puede vender más unidades que el stock disponible; el stock nunca queda negativo.",
+      "archivos": [
+        "tienda/servidor.mjs"
+      ],
+      "buscar": "pathname === '/api/ventas'",
+      "palabras": [
+        "stock",
+        "inventario",
+        "unidades",
+        "negativo"
+      ]
+    },
+    "reporte-no-cuadra": {
+      "regla": "El total del reporte del día es la suma exacta de las ventas registradas.",
+      "archivos": [
+        "tienda/servidor.mjs"
+      ],
+      "buscar": "pathname === '/api/reporte'",
+      "palabras": [
+        "reporte",
+        "cuadra",
+        "total del día",
+        "cierre"
+      ]
+    },
+    "venta-no-registrada": {
+      "regla": "Toda venta confirmada aparece en el reporte con su número y su total.",
+      "archivos": [
+        "tienda/servidor.mjs",
+        "tienda/publico/js/venta.js"
+      ],
+      "buscar": "pathname === '/api/ventas'",
+      "palabras": [
+        "venta no",
+        "no aparece",
+        "registrada",
+        "perdida"
+      ]
+    },
+    "login-sin-aviso": {
+      "regla": "Si el usuario o la clave son incorrectos, la pantalla de ingreso muestra un aviso.",
+      "archivos": [
+        "tienda/publico/index.html",
+        "tienda/publico/js/comun.js"
+      ],
+      "buscar": "form-login",
+      "palabras": [
+        "login",
+        "ingreso",
+        "clave",
+        "contraseña",
+        "usuario"
+      ]
+    }
+  },
+  "_buscar": "«buscar» es el texto exacto de la línea donde empieza el código de la regla (mejor la firma de la función que una palabra suelta)."
+}

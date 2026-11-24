@@ -1,0 +1,12 @@
+{
+  "name": "bot-qa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bot de QA por WhatsApp: recibe un fallo y responde con código sugerido por un LLM inyectado.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node src/servidor.js",
+    "test": "node --test --test-reporter=spec test/*.test.js"
+  }
+}

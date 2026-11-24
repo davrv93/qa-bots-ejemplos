@@ -1,0 +1,8 @@
+.env
+node_modules/
+pruebas/playwright-report/
+pruebas/test-results/
+pruebas/resultados/
+bots/fallos/
+robot/historial/
+.DS_Store

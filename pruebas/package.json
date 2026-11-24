@@ -1,0 +1,28 @@
+{
+  "name": "pruebas-tienda-sol",
+  "private": true,
+  "description": "Pruebas E2E y de API de Tienda Sol con Playwright + Page Object Model",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test --project=api --project=chromium",
+    "test:chromium": "playwright test --project=chromium",
+    "test:api": "playwright test --project=api",
+    "test:traza": "playwright test --project=chromium-traza",
+    "test:lightpanda": "playwright test --project=lightpanda",
+    "test:obscura": "playwright test --project=obscura",
+    "test:corregido": "node scripts/entorno.mjs BUGS=0 -- playwright test --project=api --project=chromium",
+    "reporte": "playwright show-report",
+    "portal": "node ../portal/generar.mjs",
+    "codegen": "playwright codegen http://localhost:3000",
+    "test:visual:base": "playwright test --project=chromium --grep @visual --update-snapshots",
+    "test:todos": "playwright test --project=api --project=chromium --project=lightpanda --project=obscura",
+    "informe": "node ../informe/generar.mjs",
+    "escanear": "node scripts/escanear.mjs",
+    "informe:revisar": "node ../informe/generar.mjs --revisar"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/node": "^22.10.0",
+    "docx": "^9.15.1"
+  }
+}
